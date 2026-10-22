@@ -1,1 +1,7 @@
-
+{
+  "proximity_threshold": 0.15,
+  "confidence_threshold": 0.5,
+  "camera_index": 0,
+  "frame_width": 640,
+  "frame_height": 480
+}
