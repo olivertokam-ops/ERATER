@@ -47,6 +47,11 @@ class VisionThesisSystem:
         # Analytics di scena
         self.trajectories = defaultdict(list)
         self.first_seen = {}
+        self.trajectories = defaultdict(list)
+        self.first_seen = {}
+        self.last_seen = {}  # Memorizza quando l'ID è stato visto l'ultima volta
+        self.max_lost_seconds = self.config.get("max_lost_seconds", 3.0)
+        self.latest_detected_labels = []
         self.latest_detected_labels = []
         
         # Concorrenza Thread-Safe
@@ -131,10 +136,20 @@ class VisionThesisSystem:
             for i in range(1, len(pts)):
                 cv2.line(frame, pts[i - 1], pts[i], (0, 255, 255), 2)
 
-            # 2. Dwell Time (tempo di stazionamento)
-            if track_id not in self.first_seen:
-                self.first_seen[track_id] = current_time
-            dwell_time = int(current_time - self.first_seen[track_id])
+            # 2. Dwell Time (solo per le persone e gestione perdita temporanea)
+            dwell_time = 0
+            if is_target_person:
+                # Se l'ID era sparito da troppo tempo, lo considero un nuovo ingresso
+                if track_id in self.last_seen and (current_time - self.last_seen[track_id]) > self.max_lost_seconds:
+                    self.first_seen[track_id] = current_time
+
+                # Se è la prima volta che vedo questa persona, salvo l'orario di ingresso
+                if track_id not in self.first_seen:
+                    self.first_seen[track_id] = current_time
+
+                # Aggiorno l'ultimo istante in cui l'ho vista e calcolo la durata
+                self.last_seen[track_id] = current_time
+                dwell_time = int(current_time - self.first_seen[track_id])
 
             # 3. Spatial Proximity (Stima della vicinanza tramite area occupata)
             box_area = (x2 - x1) * (y2 - y1)
@@ -155,8 +170,12 @@ class VisionThesisSystem:
 
             # Render HUD sul singolo oggetto
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(frame, f"ID:{track_id} {label} ({dwell_time}s) [{proximity_alert}]", 
-                        (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
+            if is_target_person:
+                hud_text = f"ID:{track_id} {label} ({dwell_time}s) [{proximity_alert}]"
+            else:
+                hud_text = f"ID:{track_id} {label} [{proximity_alert}]"
+
+            cv2.putText(frame, hud_text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
 
         return frame, current_labels
 
