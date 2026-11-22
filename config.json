@@ -7,4 +7,5 @@
   "proximity_threshold_percent": 25.0,
   "target_class": "person"
   "max_lost_seconds": 3.0
+  "events_csv": "events_log.csv"
 }
