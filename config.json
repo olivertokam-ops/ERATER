@@ -6,4 +6,5 @@
   "frame_height": 480
   "proximity_threshold_percent": 25.0,
   "target_class": "person"
+  "max_lost_seconds": 3.0
 }
