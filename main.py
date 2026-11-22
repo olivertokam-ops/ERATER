@@ -124,6 +124,7 @@ class VisionThesisSystem:
             x1, y1, x2, y2 = map(int, box)
             label = names[int(cls_id)]
             current_labels.append(label)
+            is_target_person = (label == self.target_class)
 
             # 1. Tracciamento centroide e traiettoria
             cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
@@ -156,7 +157,6 @@ class VisionThesisSystem:
             frame_area = w * h
             area_ratio = (box_area / frame_area) * 100
 
-            is_target_person = (label == self.target_class)
 
             if is_target_person and area_ratio > self.proximity_threshold:
                 proximity_alert = "VICINO"
